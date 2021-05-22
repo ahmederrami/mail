@@ -76,7 +76,7 @@ function load_mail(email_id){
       recipients=document.createElement('P'); recipients.innerHTML=`<b>To</b> : ${email.recipients}`; div.appendChild(recipients);
       subject=document.createElement('P'); subject.innerHTML=`<b>Subject</b> : ${email.subject}`; div.appendChild(subject);
       timestamp=document.createElement('P'); timestamp.innerHTML=`<b>Timestamp</b> : ${email.timestamp}`; div.appendChild(timestamp);
-      button=document.createElement('button'); button.innerHTML='Reply'; button.setAttribute('class',"btn btn-sm btn-outline-primary"); div.appendChild(button);
+      button=document.createElement('button'); button.innerHTML='Reply'; button.setAttribute('class',"btn btn-sm btn-outline-primary"); button.onclick=function(){alert('test');}; div.appendChild(button);
       hr=document.createElement('hr'); div.appendChild(hr);
       body=document.createElement('P'); body.innerHTML=`${email.body}`; div.appendChild(body);
   });
