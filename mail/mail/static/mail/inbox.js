@@ -59,29 +59,6 @@ function load_mailbox(mailbox) {
   
 }
 
-function load_mail(email_id){
-  // Show the mailbox and hide other views
-  document.querySelector('#emails-view').style.display = 'block';
-  document.querySelector('#compose-view').style.display = 'none';
-
-  // Show the container
-  document.querySelector('#emails-view').innerHTML = ``;
-  
-  fetch(`/emails/${email_id}`)
-  .then(response => response.json())
-  .then(email => {
-      // Print result : sender, recipients, subject, timestamp, and body.
-      div=document.querySelector('#emails-view');
-      sender=document.createElement('P'); sender.innerHTML=`<b>From</b> : ${email.sender}`; div.appendChild(sender);
-      recipients=document.createElement('P'); recipients.innerHTML=`<b>To</b> : ${email.recipients}`; div.appendChild(recipients);
-      subject=document.createElement('P'); subject.innerHTML=`<b>Subject</b> : ${email.subject}`; div.appendChild(subject);
-      timestamp=document.createElement('P'); timestamp.innerHTML=`<b>Timestamp</b> : ${email.timestamp}`; div.appendChild(timestamp);
-      button=document.createElement('button'); button.innerHTML='Reply'; button.setAttribute('class',"btn btn-sm btn-outline-primary"); div.appendChild(button);
-      hr=document.createElement('hr'); div.appendChild(hr);
-      body=document.createElement('P'); body.innerHTML=`${email.body}`; div.appendChild(body);
-  });
-}
-
 function toHtmlTable(emails) {//https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces
   // get the reference for the body
   var mybody = document.querySelector('#emails-view');
@@ -95,18 +72,7 @@ function toHtmlTable(emails) {//https://developer.mozilla.org/en-US/docs/Web/API
   for(var j = 0; j < n; j++) {
       // creates a <tr> element
       mycurrent_row = document.createElement("tr");
-      //<a href="#" id="sampleApp" onclick="myFunction(); return false;">Click Here</a>
-      var a = document.createElement('a');
-      a.href=`javascript:load_mail(${emails[j].id});`;
-       
-      var link = document.createTextNode("#");
-      a.appendChild(link);
-
-      link_cell = document.createElement("td");
-      link_cell.appendChild(a);
-      mycurrent_row.appendChild(link_cell);
-
-      var values = [emails[j].sender,emails[j].recipients,emails[j].subject,emails[j].timestamp];
+      var values = [emails[j].sender,emails[j].subject,emails[j].timestamp];
       for(var i = 0; i < values.length; i++) {
           // creates a <td> element
           mycurrent_cell = document.createElement("td");
