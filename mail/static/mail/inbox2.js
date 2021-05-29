@@ -64,18 +64,38 @@ function load_mailbox(mailbox) {
   fetch(`/emails/${mailbox}`) //getting emails in mailbox
   .then(response => response.json())
   .then(emails => {
-      // Print result
-      //document.querySelector('#emails-view').innerHTML = emails;
-      
-      toHtmlTable(emails,mailbox);
+    // let count=0;
+    emails.forEach(email => {
+      const div = document.createElement('div');
+      // count++;
+      if(email.read === true){
+        div.setAttribute('class',"Email-Container-Read");
+        div.innerHTML=`<div class="container" style="max-width:99%;"><div class="card" style="padding:10px;background-color:gray;"><div class="col-sm"><i class="fas fa-envelope-open-text fa-1x"></i><b> ${email.subject} </b></div><div class="col-sm"><p>From: ${email.sender} - ${email.timestamp}</p></div></div><br/></div>`;
+        // if(mailbox==='inbox'){
+        //   count--;
+        //   document.querySelector('#count').innerHTML=count;
+        // }
+      }
+      else {
+        div.setAttribute('class',"Email-Container-NotRead");
+        // document.querySelector('#count').innerHTML=count;
+        div.innerHTML=`<div class="container" style="max-width:99%;"><div class="card" style="padding:10px;"><div class="col-sm"><i class="fas fa-envelope-open-text fa-1x"></i><b> ${email.subject} </b></div><div class="col-sm"><p>From: ${email.sender} - ${email.timestamp}</p></div></div><br/></div>`;
+      }
+      div.addEventListener('click', function(){
+        view_email(email,mailbox);
+      })
+      document.querySelector('#emails-view').append(div);
+    });
+    
+      //toHtmlTable(emails,mailbox);
   });
   
 }
 //-----------------------------------------------------------------------------------------
-//---------------------------------load_mail()---------------------------------------------
+//---------------------------------view_email()---------------------------------------------
 //-----------------------------------------------------------------------------------------
 
-function load_mail(email_id,mailbox){ //mailbox parameter to allow adding reply button only to inbox mails
+function view_email(email,mailbox){ //mailbox parameter to allow adding reply button only to inbox mails
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#email-view').style.display = 'block';
@@ -85,81 +105,76 @@ function load_mail(email_id,mailbox){ //mailbox parameter to allow adding reply 
   document.querySelector('#email-view').innerHTML = ``;
   
   if(mailbox==='inbox'){
-    fetch(`/emails/${email_id}`, {//mark the email as read
+    fetch(`/emails/${email.id}`, {//mark the email as read
       method: 'PUT',
       body: JSON.stringify({
           read: true,
       })
     });
   }
-  fetch(`/emails/${email_id}`) //display email detail
+  fetch(`/emails/${email.id}`) //display email detail
   .then(response => response.json())
   .then(email => {
       // Print result : sender, recipients, subject, timestamp, and body.
-      div=document.querySelector('#email-view');
-      sender=document.createElement('P'); sender.innerHTML=`<b>From</b> : ${email.sender}`; div.appendChild(sender);
-      recipients=document.createElement('P'); recipients.innerHTML=`<b>To</b> : ${email.recipients}`; div.appendChild(recipients);
-      subject=document.createElement('P'); subject.innerHTML=`<b>Subject</b> : ${email.subject}`; div.appendChild(subject);
-      timestamp=document.createElement('P'); timestamp.innerHTML=`<b>Timestamp</b> : ${email.timestamp}`; div.appendChild(timestamp);
-      if(mailbox==="inbox"){ // add reply button to inbox mails only
-        button=document.createElement('button'); button.innerHTML='Reply'; button.setAttribute('class',"btn btn-sm btn-outline-primary"); button.onclick=function(){load_mailbox("sent");}; div.appendChild(button);
+      let div=document.querySelector('#email-view');
+      let sender=document.createElement('P'); sender.innerHTML=`<b>From</b> : ${email.sender}`; div.appendChild(sender);
+      let recipients=document.createElement('P'); recipients.innerHTML=`<b>To</b> : ${email.recipients}`; div.appendChild(recipients);
+      let subject=document.createElement('P'); subject.innerHTML=`<b>Subject</b> : ${email.subject}`; div.appendChild(subject);
+      let timestamp=document.createElement('P'); timestamp.innerHTML=`<b>Timestamp</b> : ${email.timestamp}`; div.appendChild(timestamp);
+      if(mailbox==="inbox"){ // add reply button to inbox emails only
+        let repButton=document.createElement('button'); repButton.innerHTML="Reply  <i class='fa fa-reply'></i>"; repButton.setAttribute('class',"btn btn-sm btn-outline-primary"); repButton.addEventListener('click',()=>{reply_email(email);}); div.appendChild(repButton);
       }
-      hr=document.createElement('hr'); div.appendChild(hr);
-      body=document.createElement('P'); body.innerHTML=`${email.body}`; div.appendChild(body);
+      if(mailbox!="archive"){ // you can archive any email out of archive mailbox
+        let arButton=document.createElement('button'); arButton.innerHTML="Archive"; arButton.setAttribute('class',"btn btn-sm btn-outline-primary"); arButton.addEventListener('click',()=>archive_email(email)); div.appendChild(arButton);
+      }
+      else { // you can unarchive it
+        let arButton=document.createElement('button'); arButton.innerHTML="Unarchive"; arButton.setAttribute('class',"btn btn-sm btn-outline-primary"); arButton.addEventListener('click',()=>unarchive_email(email)); div.appendChild(arButton);
+      }
+
+      let hr=document.createElement('hr'); div.appendChild(hr);
+      let body=document.createElement('P'); body.innerHTML=`${email.body}`; div.appendChild(body);
   });
 }
 
 //-------------------------------------------------------------------------------------------
-//---------------------------------toHtmlTable()---------------------------------------------
+//---------------------------------archive an email---------------------------------------------
 //-------------------------------------------------------------------------------------------
 
-function toHtmlTable(emails,mailbox) {//https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Traversing_an_HTML_table_with_JavaScript_and_DOM_Interfaces
-  // get the reference for the body
-  
-  var mybody = document.querySelector('#emails-view');
-  // creates <table> and <tbody> elements
-  mytable = document.createElement("table");
-  mytablebody = document.createElement("tbody");
-  
-  // creating all cells
-  const n=emails.length;
-  for(var j = 0; j < n; j++) {
-      // creates a <tr> element
-      mycurrent_row = document.createElement("tr");
-      if(emails[j].read===true && mailbox==="inbox") { //If the email has been read, it should appear with a gray background
-        mycurrent_row.style.background="gray";
-      };
+function archive_email(mail){
+  fetch(`/emails/${mail.id}`,{
+    method:'PUT',
+    body: JSON.stringify({
+      archived:true,
+    })
+  });
+  load_mailbox('inbox');
+}
 
-      //<a href="#" id="sampleApp" onclick="myFunction(); return false;">Click Here</a>
-      var a = document.createElement('a');
-      a.href=`javascript:load_mail(${emails[j].id},${mailbox});`;
+//-------------------------------------------------------------------------------------------
+//---------------------------------unarchive an email---------------------------------------------
+//-------------------------------------------------------------------------------------------
 
-      var link = document.createTextNode("#");
-      a.appendChild(link);
+function unarchive_email(mail){
+  fetch(`/emails/${mail.id}`,{
+    method:'PUT',
+    body: JSON.stringify({
+      archived:false,
+    })
+  })
+  load_mailbox('inbox');
+}
 
-      link_cell = document.createElement("td");
-      link_cell.appendChild(a);
-      mycurrent_row.appendChild(link_cell);
+//-------------------------------------------------------------------------------------------
+//---------------------------------reply to an email---------------------------------------------
+//-------------------------------------------------------------------------------------------
 
-      var values = [emails[j].sender,emails[j].recipients,emails[j].subject,emails[j].timestamp];
-      for(var i = 0; i < values.length; i++) {
-          // creates a <td> element
-          mycurrent_cell = document.createElement("td");
-          // creates a Text Node
-          currenttext = document.createTextNode(values[i]);
-          // appends the Text Node we created into the cell <td>
-          mycurrent_cell.appendChild(currenttext);
-          // appends the cell <td> into the row <tr>
-          mycurrent_row.appendChild(mycurrent_cell);
-      }
-      // appends the row <tr> into <tbody>
-      mytablebody.appendChild(mycurrent_row);
+function reply_email(email){
+  var subject = email.subject;
+  if (!subject.startsWith("Re:")){
+    subject = `Re: ${subject}`
   }
-
-  // appends <tbody> into <table>
-  mytable.appendChild(mytablebody);
-  // appends <table> into <body>
-  mybody.appendChild(mytable);
-  // sets the border attribute of mytable to 2;
-  mytable.setAttribute("border","2");
+  compose_email();
+  document.querySelector('#compose-recipients').value = `${email.sender}`;
+  document.querySelector('#compose-subject').value = `${subject}`;
+  document.querySelector('#compose-body').value = `\nOn ${email.timestamp} ${email.sender} wrote: \n${email.body}....`;
 }
