@@ -64,32 +64,22 @@ function load_mailbox(mailbox) {
   fetch(`/emails/${mailbox}`) //getting emails in mailbox
   .then(response => response.json())
   .then(emails => {
-    // let count=0;
     emails.forEach(email => {
       const div = document.createElement('div');
-      // count++;
-      if(email.read === true){
+      if(email.read === true && mailbox === 'inbox'){
         div.setAttribute('class',"Email-Container-Read");
         div.innerHTML=`<div class="container" style="max-width:99%;"><div class="card" style="padding:10px;background-color:gray;"><div class="col-sm"><i class="fas fa-envelope-open-text fa-1x"></i><b> ${email.subject} </b></div><div class="col-sm"><p>From: ${email.sender} - ${email.timestamp}</p></div></div><br/></div>`;
-        // if(mailbox==='inbox'){
-        //   count--;
-        //   document.querySelector('#count').innerHTML=count;
-        // }
       }
       else {
         div.setAttribute('class',"Email-Container-NotRead");
-        // document.querySelector('#count').innerHTML=count;
         div.innerHTML=`<div class="container" style="max-width:99%;"><div class="card" style="padding:10px;"><div class="col-sm"><i class="fas fa-envelope-open-text fa-1x"></i><b> ${email.subject} </b></div><div class="col-sm"><p>From: ${email.sender} - ${email.timestamp}</p></div></div><br/></div>`;
       }
-      div.addEventListener('click', function(){
+      div.addEventListener('click', ()=>{
         view_email(email,mailbox);
       })
       document.querySelector('#emails-view').append(div);
     });
-    
-      //toHtmlTable(emails,mailbox);
   });
-  
 }
 //-----------------------------------------------------------------------------------------
 //---------------------------------view_email()---------------------------------------------
@@ -122,15 +112,12 @@ function view_email(email,mailbox){ //mailbox parameter to allow adding reply bu
       let subject=document.createElement('P'); subject.innerHTML=`<b>Subject</b> : ${email.subject}`; div.appendChild(subject);
       let timestamp=document.createElement('P'); timestamp.innerHTML=`<b>Timestamp</b> : ${email.timestamp}`; div.appendChild(timestamp);
       if(mailbox==="inbox"){ // add reply button to inbox emails only
-        let repButton=document.createElement('button'); repButton.innerHTML="Reply  <i class='fa fa-reply'></i>"; repButton.setAttribute('class',"btn btn-sm btn-outline-primary"); repButton.addEventListener('click',()=>{reply_email(email);}); div.appendChild(repButton);
-      }
-      if(mailbox!="archive"){ // you can archive any email out of archive mailbox
+        let repButton=document.createElement('button'); repButton.innerHTML="Reply  <i class='fa fa-reply'></i>"; repButton.setAttribute('class',"btn btn-sm btn-outline-primary"); repButton.addEventListener('click',()=>reply_email(email)); div.appendChild(repButton);
         let arButton=document.createElement('button'); arButton.innerHTML="Archive"; arButton.setAttribute('class',"btn btn-sm btn-outline-primary"); arButton.addEventListener('click',()=>archive_email(email)); div.appendChild(arButton);
       }
-      else { // you can unarchive it
+      if(mailbox==="archive"){ // you can archive any email out of archive mailbox
         let arButton=document.createElement('button'); arButton.innerHTML="Unarchive"; arButton.setAttribute('class',"btn btn-sm btn-outline-primary"); arButton.addEventListener('click',()=>unarchive_email(email)); div.appendChild(arButton);
       }
-
       let hr=document.createElement('hr'); div.appendChild(hr);
       let body=document.createElement('P'); body.innerHTML=`${email.body}`; div.appendChild(body);
   });
@@ -147,7 +134,10 @@ function archive_email(mail){
       archived:true,
     })
   });
-  load_mailbox('inbox');
+  //load_mailbox('inbox');
+  setTimeout(()=>{//Just to wait (for 10ms) untill the mail is updated
+    load_mailbox('inbox');
+  }, 10);
 }
 
 //-------------------------------------------------------------------------------------------
@@ -160,8 +150,11 @@ function unarchive_email(mail){
     body: JSON.stringify({
       archived:false,
     })
-  })
-  load_mailbox('inbox');
+  });
+  //load_mailbox('inbox');
+  setTimeout(()=>{
+    load_mailbox('inbox');
+  }, 10);
 }
 
 //-------------------------------------------------------------------------------------------
@@ -176,5 +169,5 @@ function reply_email(email){
   compose_email();
   document.querySelector('#compose-recipients').value = `${email.sender}`;
   document.querySelector('#compose-subject').value = `${subject}`;
-  document.querySelector('#compose-body').value = `\nOn ${email.timestamp} ${email.sender} wrote: \n${email.body}....`;
+  document.querySelector('#compose-body').value = `\n\n------------------\nOn ${email.timestamp} ${email.sender} wrote: \n${email.body}\n`;
 }
